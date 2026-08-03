@@ -1,10 +1,10 @@
 {:paths ["src" "resources"]
  :deps {io.github.kotoba-lang/mokuroku
         {:git/url "https://github.com/kotoba-lang/mokuroku.git"
-         :git/sha "0d7add7635b1a3494b8d4973caa38528e1d3de66"}
+         :git/sha "00f0bfcd134879712d4b102e6d1ea4da5e37ad7b"}
         io.github.kotoba-lang/mokuroku-ui
         {:git/url "https://github.com/kotoba-lang/mokuroku-ui.git"
-         :git/sha "bfe0e53da2f6cebe46ef6c7994b37ef88f0a58fa"}}
+         :git/sha "58f358c392b254c9c733a1ef13c55e9960710c3f"}}
  :aliases
  {:test {:extra-paths ["test"]
          :extra-deps {org.clojure/clojure {:mvn/version "1.11.1"}
