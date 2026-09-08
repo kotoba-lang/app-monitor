@@ -2,7 +2,7 @@
   (:require [app-monitor.model :as model]
             [app-monitor.page :as page]
             [app-monitor.source :as source]
-            [clojure.string :as str]
+            [kotoba.lang.text :as str]
             [clojure.test :refer [deftest is testing]]
             [design-quality.audit :as dq]
             [mokuroku.catalog :as catalog]
