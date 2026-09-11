@@ -37,9 +37,9 @@ ends up saying 68% while the visible rows add to 12%.
 ## Test
 
 ```sh
-clojure -M:local:test    # sibling checkouts
-clojure -M:test          # pinned git deps
-clojure -M:lint
+kbb -M:local:test    # sibling checkouts
+kbb -M:test          # pinned git deps
+kbb -M:lint
 ```
 
 design-quality: 100.00 on listing / selection / awaiting-grant (2026-08-03).
