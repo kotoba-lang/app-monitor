@@ -3,7 +3,7 @@
             [app-monitor.page :as page]
             [app-monitor.source :as source]
             [kotoba.lang.text :as str]
-            [clojure.test :refer [deftest is testing]]
+            [kotoba.test :refer [deftest is testing]]
             [design-quality.audit :as dq]
             [mokuroku.catalog :as catalog]
             [mokuroku.item :as item]))
