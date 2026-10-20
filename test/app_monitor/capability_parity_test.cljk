@@ -1,0 +1,22 @@
+(ns app-monitor.capability-parity-test
+  "aiueos/monitor_capability.cljk（判定コア）と app-monitor.model の parity。
+  実データ（model の定数と descriptor）が guest の規則と一致する:
+  2 capability の分離 / states の閉じた集合と非畳み込み / commands の限定。"
+  (:require [clojure.test :refer [deftest is testing]]
+            [app-monitor.model :as m]))
+
+(deftest capability-split-matches-guest
+  (testing "guest test-split: process/list と system/metrics は別 capability"
+    (is (= "process/list" m/process-capability))
+    (is (= "system/metrics" m/metrics-capability))
+    (is (not= m/process-capability m/metrics-capability))))
+
+(deftest states-match-guest
+  (testing "guest test-state: 閉じた集合（未知は畳まない = この集合の外は通す）"
+    (is (= #{:running :sleeping :stopped :zombie :idle} m/states))
+    (is (not (contains? m/states :unknown)))))
+
+(deftest commands-match-guest
+  (testing "guest test-quit / test-force-quit: quit と copy-path のみ。Force Quit は無い"
+    (is (= #{:quit :copy-path} m/commands))
+    (is (not (contains? m/commands :force-quit)))))
