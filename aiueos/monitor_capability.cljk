@@ -1,0 +1,77 @@
+(ns monitor.capability
+  "monitor capability 判定コア — itonami dapp bundle（pure, :effects #{}）。
+
+  Activity Monitor の capability model の判定（正本: src/app_monitor/model.cljk）:
+
+  - **2 つの capability は 1 つに畳まない**: process/list（個人データ —
+    どのアプリをどの文書で開いているかを暴露しうる）と system/metrics
+    （集計値のみ）。畳めばメニューバーの CPU ゲージが全プロセス名を見る
+    権限を要求することになる = capability model が防ぐ過剰付与そのもの。
+  - **quit のみが mutation で破壊的**: カーネルが確認を要求し、黙って
+    バッチ化することを拒む。プロバイダが 2 つを区別できるまで Force Quit は
+    提供しない（実装 1 つで 2 つを並べるのは、両方無しより悪い）。
+  - **状態は unknown に畳まない**: 未知の状態はそのまま通す。:unknown を
+    発明すると、プロバイダが持っていた唯一の情報を消すことになる。
+
+  grant-judgment のエラービット（0 = 規則どおり）:
+    1 :over-grant   必要でない process/list を付与
+    2 :under-grant  必要なのに付与しない
+    4 :folded       2 capability を 1 つに畳んだ
+  command-judgment のエラービット（0 = 規則どおり）:
+    1 :unconfirmed-quit  確認無しの quit
+    2 :batched-quit      quit の黙ったバッチ化
+    4 :force-quit        区別できるプロバイダ無しの Force Quit 提供
+  state-judgment: 1 = 未知の状態を :unknown に畳んだ（違反）/ 0 = 規則どおり
+
+  実行 host はスカラーのみ = KIR v3 / i64/direct ABI（kernel/selfhost 両対応）。
+
+  テストはゼロ引数 test-*、戻り 1/0:
+  <amu> test aiueos/monitor_capability.cljk"
+  (:export [main grant-judgment command-judgment state-judgment
+            test-split test-over test-under test-quit test-force-quit
+            test-state test-fail-closed]))
+
+(defn main [] :i64
+  0)
+
+(defn grant-judgment [needs-process :i64 needs-metrics :i64 granted-process :i64 granted-metrics :i64] :i64
+  (+ (if (and (= granted-process 1) (= needs-process 0)) 1 0)
+     (if (and (= needs-process 1) (= granted-process 0)) 2 0)
+     (if (and (= needs-metrics 1) (= granted-metrics 0)) 2 0)
+     (if (and (= granted-metrics 1) (= needs-metrics 0)) 1 0)))
+
+(defn command-judgment [is-quit :i64 confirmed :i64 batched :i64 is-force-quit :i64] :i64
+  (+ (if (and (= is-quit 1) (= confirmed 0)) 1 0)
+     (if (and (= is-quit 1) (= batched 1)) 2 0)
+     (if (= is-force-quit 1) 4 0)))
+
+(defn state-judgment [is-known :i64 was-coerced :i64] :i64
+  (if (= was-coerced 1) 1 0))
+
+;; --- tests（戻り 1 = pass） ------------------------------------------------
+
+(defn test-split [] :i64
+  ;; 適正付与（process 必要→process、metrics 必要→metrics）は 0
+  (if (= (+ (grant-judgment 1 0 1 0) (grant-judgment 0 1 0 1) (grant-judgment 1 1 1 1)) 0) 1 0))
+
+(defn test-over [] :i64
+  ;; メニューバーの CPU ゲージ（metrics のみ必要）に process/list を与えない
+  (if (= (+ (grant-judgment 0 1 1 1) (grant-judgment 1 0 1 1)) 2) 1 0))
+
+(defn test-under [] :i64
+  (if (= (+ (grant-judgment 1 0 0 0) (grant-judgment 0 1 0 0)) 4) 1 0))
+
+(defn test-quit [] :i64
+  ;; 確認済み・非バッチの quit は 0。確認無し / バッチは違反
+  (if (= (+ (command-judgment 1 1 0 0) (command-judgment 1 0 0 0) (command-judgment 1 1 1 0)) 3) 1 0))
+
+(defn test-force-quit [] :i64
+  ;; 区別できるプロバイダが無い限り Force Quit は提供しない
+  (if (= (command-judgment 0 0 0 1) 4) 1 0))
+
+(defn test-state [] :i64
+  ;; 未知の状態はそのまま通す。:unknown への畳み込みは違反
+  (if (= (+ (state-judgment 1 0) (state-judgment 0 0) (state-judgment 0 1)) 1) 1 0))
+
+(defn test-fail-closed [] :i64
+  (if (= (command-judgment 1 0 1 1) 7) 1 0))

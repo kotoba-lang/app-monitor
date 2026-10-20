@@ -1,0 +1,17 @@
+;; app-monitor — itonami（dapp）の aiueos アプリ記述子（notes.edn 形）。
+;; 判定コアは aiueos/monitor_capability.cljk（capability model の判定）。
+;; 正本は src/app_monitor/model.cljk。pure（:effects #{}）。
+{:aiueos/component :app/monitor-capability
+ :aiueos/kind :app
+ :aiueos/trust :untrusted
+ :aiueos/source "monitor_capability.cljk"
+ :aiueos/wasm "monitor_capability.wasm"
+ :aiueos/entry "main"
+ :aiueos/args []
+ :aiueos/imports #{}
+ :aiueos/exports #{:app/main
+                   :app/grant-judgment
+                   :app/command-judgment
+                   :app/state-judgment}
+ :aiueos/effects #{}
+ :aiueos/limits {:memory-pages 16 :fuel 5000000}}
